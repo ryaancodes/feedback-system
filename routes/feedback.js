@@ -8,14 +8,14 @@ router.post('/', async (req, res) => {
   const { name, email, rating, comments } = req.body;
 
   try {
-    const [result] = await db.execute(
-      'INSERT INTO feedback (name, email, rating, comments) VALUES (?, ?, ?, ?)',
+    const [rows] = await db.execute(
+      'INSERT INTO feedback (name, email, rating, comments) VALUES ($1, $2, $3, $4) RETURNING id',
       [name, email, rating, comments]
     );
 
     res.json({
       success: true,
-      id: result.insertId
+      id: rows[0].id
     });
 
   } catch (err) {
@@ -35,20 +35,23 @@ router.get('/', async (req, res) => {
 
     let sql = 'SELECT * FROM feedback WHERE 1=1';
     const params = [];
+    let paramIndex = 1;
 
     // 🔍 SEARCH
     if (search) {
-      sql += ' AND (name LIKE ? OR email LIKE ?)';
+      sql += ` AND (name ILIKE $${paramIndex} OR email ILIKE $${paramIndex + 1})`;
       params.push(`%${search}%`, `%${search}%`);
+      paramIndex += 2;
     }
 
     // ⭐ FILTER
     if (rating) {
-      sql += ' AND rating = ?';
+      sql += ` AND rating = $${paramIndex}`;
       params.push(Number(rating));
+      paramIndex++;
     }
 
-    // ⬇️ SORT (FULL FIX)
+    // ⬇️ SORT
     if (sort === 'latest') {
       sql += ' ORDER BY submitted_at DESC';
     } else if (sort === 'oldest') {
@@ -81,17 +84,19 @@ router.get('/', async (req, res) => {
 // ── GET: Analytics ─────────────────────────────
 router.get('/analytics', async (req, res) => {
   try {
-    const [[stats]] = await db.execute(`
+    const [statsRows] = await db.execute(`
       SELECT
         COUNT(*) AS total_feedback,
         ROUND(AVG(rating), 2) AS average_rating,
-        SUM(rating = 5) AS five_star,
-        SUM(rating = 4) AS four_star,
-        SUM(rating = 3) AS three_star,
-        SUM(rating = 2) AS two_star,
-        SUM(rating = 1) AS one_star
+        SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) AS five_star,
+        SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) AS four_star,
+        SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) AS three_star,
+        SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) AS two_star,
+        SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) AS one_star
       FROM feedback
     `);
+
+    const stats = statsRows[0];
 
     const [trend] = await db.execute(`
       SELECT
@@ -122,7 +127,7 @@ router.get('/analytics', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     await db.execute(
-      'DELETE FROM feedback WHERE id = ?',
+      'DELETE FROM feedback WHERE id = $1',
       [req.params.id]
     );
 
@@ -136,6 +141,5 @@ router.delete('/:id', async (req, res) => {
     });
   }
 });
-
 
 module.exports = router;
