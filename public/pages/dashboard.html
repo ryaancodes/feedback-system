@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Feedback System</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* Trend mini-chart */
+    .trend-bars {
+      display: flex; align-items: flex-end; gap: 6px;
+      height: 80px; padding-top: 8px;
+    }
+    .trend-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .trend-bar {
+      width: 100%; border-radius: 4px 4px 0 0;
+      background: linear-gradient(180deg, var(--accent), var(--teal));
+      min-height: 4px;
+      transition: height 0.8s cubic-bezier(.4,0,.2,1);
+    }
+    .trend-day { font-size: 0.62rem; color: var(--text-30); }
+    .no-trend   { font-size: 0.82rem; color: var(--text-30); text-align:center; padding: 24px 0; }
+
+    /* Delete confirm overlay */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(2,12,16,0.8);
+      backdrop-filter: blur(6px);
+      z-index: 500;
+      display: none; align-items: center; justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+    .overlay.show { display: flex; }
+    .confirm-card {
+      background: #0a1e2e;
+      border: 1px solid var(--border-glass);
+      border-radius: var(--r-lg);
+      padding: 36px 32px;
+      max-width: 380px; width: 90%;
+      text-align: center;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      animation: fadeUp 0.3s ease;
+    }
+    .confirm-card .warn-icon {
+      font-size: 2.4rem; margin-bottom: 16px;
+    }
+    .confirm-card h3 { font-size: 1.2rem; margin-bottom: 8px; }
+    .confirm-card p  { font-size: 0.88rem; color: var(--text-60); margin-bottom: 28px; }
+    .confirm-btns { display: flex; gap: 12px; justify-content: center; }
+  </style>
+</head>
+<body>
+
+<!-- ── Navbar ─────────────────────────────────────────────── -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <span class="dot"></span>
+    Feedback Dashboard
+  </div>
+  <div class="navbar-actions">
+    <span class="navbar-user" id="adminUser">Loading…</span>
+    <button class="btn btn-ghost" id="logoutBtn"
+            style="padding:8px 18px; font-size:0.82rem;">
+      Sign Out
+    </button>
+  </div>
+</nav>
+
+<!-- ── Main ───────────────────────────────────────────────── -->
+<div class="page-wrapper">
+
+  <!-- Stats Row -->
+  <p class="sec-label" style="margin-bottom:16px;">Overview</p>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-icon">📋</span>
+      <span class="stat-label">Total Submissions</span>
+      <span class="stat-value" id="statTotal"><span class="spin"></span></span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">⭐</span>
+      <span class="stat-label">Average Rating</span>
+      <span class="stat-value accent" id="statAvg">—</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">🏆</span>
+      <span class="stat-label">5-Star Reviews</span>
+      <span class="stat-value teal" id="statFive">—</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">⚡</span>
+      <span class="stat-label">1-Star Reviews</span>
+      <span class="stat-value" id="statOne">—</span>
+    </div>
+  </div>
+
+  <!-- Analytics Row: distribution + trend -->
+  <div class="dash-grid">
+
+    <!-- Rating Distribution -->
+    <div class="card" style="padding:28px;">
+      <p class="sec-label">Rating Distribution</p>
+      <div class="rating-dist" id="ratingDist">
+        <div style="text-align:center;padding:20px"><span class="spin"></span></div>
+      </div>
+    </div>
+
+    <!-- 7-Day Trend -->
+    <div class="card" style="padding:28px;">
+      <p class="sec-label">7-Day Submission Trend</p>
+      <div class="trend-bars" id="trendBars">
+        <div class="no-trend">Loading trend data…</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Controls + Table -->
+  <p class="sec-label">All Feedback</p>
+  <div class="controls">
+    <div class="ctrl-wrap" style="flex:1; min-width:220px;">
+      <span class="ctrl-icon">🔍</span>
+      <input class="ctrl-input" type="text" id="searchInput"
+             placeholder="Search by name or email…"
+             style="width:100%">
+    </div>
+
+    <select class="ctrl-select" id="filterRating">
+      <option value="">All Ratings</option>
+      <option value="5">★★★★★  5 Stars</option>
+      <option value="4">★★★★☆  4 Stars</option>
+      <option value="3">★★★☆☆  3 Stars</option>
+      <option value="2">★★☆☆☆  2 Stars</option>
+      <option value="1">★☆☆☆☆  1 Star</option>
+    </select>
+
+    <select class="ctrl-select" id="sortOrder">
+      <option value="latest">↓ Latest First</option>
+      <option value="oldest">↑ Oldest First</option>
+      <option value="highest">▲ Highest Rating</option>
+      <option value="lowest">▼ Lowest Rating</option>
+    </select>
+
+    <button class="btn btn-ghost" id="clearBtn"
+            style="padding:10px 16px; font-size:0.84rem;">
+      Clear ✕
+    </button>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Rating</th>
+          <th>Comments</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tblBody">
+        <tr><td colspan="7">
+          <div class="empty"><span class="spin"></span></div>
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="row-count" id="rowCount"></p>
+
+</div><!-- /page-wrapper -->
+
+<!-- Delete Confirm Overlay -->
+<div class="overlay" id="deleteOverlay">
+  <div class="confirm-card">
+    <div class="warn-icon">🗑</div>
+    <h3>Delete this feedback?</h3>
+    <p>This action cannot be undone. The record will be permanently removed from the database.</p>
+    <div class="confirm-btns">
+      <button class="btn btn-ghost" id="cancelDelete">Cancel</button>
+      <button class="btn btn-primary" id="confirmDelete"
+              style="background:var(--danger); box-shadow:none; color:#fff;">
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

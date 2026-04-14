@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login — Feedback System</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="login-wrap">
+  <div class="login-card">
+
+    <!-- Header -->
+    <div class="login-head">
+      <div class="login-logo">🔐</div>
+      <h1>Admin Portal</h1>
+      <p>Sign in to access the feedback dashboard</p>
+    </div>
+
+    <!-- Card -->
+    <div class="card">
+
+      <!-- Error banner -->
+      <div class="login-error" id="loginError">
+        <span>⚠</span>
+        <span id="loginErrorMsg">Invalid credentials.</span>
+      </div>
+
+      <form id="loginForm" novalidate>
+
+        <div class="form-group" id="grp-username">
+          <label for="username">Username</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" id="username" placeholder="Enter username"
+                   autocomplete="username">
+          </div>
+          <span class="field-error">Username is required.</span>
+        </div>
+
+        <div class="form-group" id="grp-password">
+          <label for="password">Password</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔑</span>
+            <input type="password" id="password" placeholder="Enter password"
+                   autocomplete="current-password">
+          </div>
+          <span class="field-error">Password is required.</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" id="loginBtn">
+          Sign In →
+        </button>
+
+      </form>
+    </div><!-- /card -->
+
+    <p style="text-align:center; margin-top:18px; font-size:0.82rem; color:var(--text-30)">
+      ← <a href="/" style="color:var(--accent); text-decoration:none; font-weight:600;">
+        Back to Feedback Form
+      </a>
+    </p>
+
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+<script src="/js/admin-login.js"></script>
+</body>
+</html>
