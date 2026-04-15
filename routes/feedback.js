@@ -7,7 +7,7 @@ router.post('/', async (req, res) => {
   const { name, email, rating, comments } = req.body;
 
   try {
-    const [rows] = await db.execute(
+    const rows = await db.execute(
       `INSERT INTO feedback (name, email, rating, comments)
        VALUES ($1, $2, $3, $4)
        RETURNING id`,
@@ -25,10 +25,10 @@ router.post('/', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('❌ POST ERROR:', err); // 🔥 logs
+    console.error('❌ POST ERROR:', err);
     res.status(500).json({
       success: false,
-      message: err.message // 🔥 shows real error
+      message: err.message
     });
   }
 });
@@ -67,7 +67,7 @@ router.get('/', async (req, res) => {
       sql += ' ORDER BY id DESC';
     }
 
-    const [rows] = await db.execute(sql, params);
+    const rows = await db.execute(sql, params);
 
     res.json({
       success: true,
@@ -87,7 +87,7 @@ router.get('/', async (req, res) => {
 // ── GET: Analytics ─────────────────────────
 router.get('/analytics', async (req, res) => {
   try {
-    const [statsRows] = await db.execute(`
+    const statsRows = await db.execute(`
       SELECT
         COUNT(*) AS total_feedback,
         ROUND(AVG(rating), 2) AS average_rating,
@@ -101,7 +101,7 @@ router.get('/analytics', async (req, res) => {
 
     const stats = statsRows[0];
 
-    const [trend] = await db.execute(`
+    const trend = await db.execute(`
       SELECT
         DATE(submitted_at) AS day,
         COUNT(*) AS count
