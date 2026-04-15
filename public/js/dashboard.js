@@ -34,10 +34,10 @@ function badge(n) {
   return `<span class="badge badge-${n}">${n} ★</span>`;
 }
 
-// ── Load Analytics ──────────────────────────
-async function loadAnalytics() {
+// ── Load Stats (simple, no charts) ──────────
+async function loadStats() {
   try {
-    const r = await fetch('/api/feedback/analytics', { credentials: 'include' });
+    const r = await fetch('/api/feedback/analytics');
     const d = await r.json();
 
     if (!d.success) return;
@@ -70,10 +70,7 @@ async function loadFeedback() {
   body.innerHTML = `<tr><td colspan="7">Loading...</td></tr>`;
 
   try {
-    const r = await fetch('/api/feedback?' + params.toString(), {
-      credentials: 'include'
-    });
-
+    const r = await fetch('/api/feedback?' + params.toString());
     const data = await r.json();
 
     if (!data.success) {
@@ -114,15 +111,14 @@ async function deleteFeedback(id) {
 
   try {
     const r = await fetch(`/api/feedback/${id}`, {
-      method: 'DELETE',
-      credentials: 'include'
+      method: 'DELETE'
     });
 
     const data = await r.json();
 
     if (data.success) {
       loadFeedback();
-      loadAnalytics();
+      loadStats();
     }
 
   } catch (err) {
@@ -132,11 +128,7 @@ async function deleteFeedback(id) {
 
 // ── Logout ─────────────────────────────────
 $('logoutBtn').addEventListener('click', async () => {
-  await fetch('/api/admin/logout', {
-    method: 'POST',
-    credentials: 'include'
-  });
-
+  await fetch('/api/admin/logout', { method: 'POST' });
   window.location.href = '/admin';
 });
 
@@ -153,5 +145,5 @@ $('clearBtn')?.addEventListener('click', () => {
 });
 
 // ── Init ───────────────────────────────────
-loadAnalytics();
+loadStats();
 loadFeedback();
