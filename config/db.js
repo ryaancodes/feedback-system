@@ -10,6 +10,6 @@ const pool = new Pool({
 module.exports = {
   execute: async (query, params) => {
     const res = await pool.query(query, params);
-    return [res.rows];
+    return res.rows; // ALWAYS return rows only
   }
 };
