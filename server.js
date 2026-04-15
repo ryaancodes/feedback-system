@@ -4,10 +4,11 @@ const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
 const path = require('path');
+const bcrypt = require('bcrypt');
 
 const feedbackRoutes = require('./routes/feedback');
 const adminRoutes = require('./routes/admin');
-const db = require('./config/db'); // ✅ ADD THIS
+const db = require('./config/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,9 +40,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/admin', adminRoutes);
 
-// 🔥 AUTO CREATE TABLE (FIX YOUR ERROR)
+// 🔥 INIT DB (tables + admin fix)
 (async () => {
   try {
+    // Create tables
     await db.execute(`
       CREATE TABLE IF NOT EXISTS feedback (
         id SERIAL PRIMARY KEY,
@@ -62,36 +64,22 @@ app.use('/api/admin', adminRoutes);
     `);
 
     console.log('✅ Tables ready');
-  } catch (err) {
-    console.error('❌ Table creation error:', err);
-  }
-})();
 
-// 🔥 AUTO CREATE ADMIN (only if not exists)
-(async () => {
-  try {
-    const bcrypt = require('bcrypt');
+    // 🔥 FORCE FIX ADMIN PASSWORD (your actual password)
+    const hashed = await bcrypt.hash('feedback6969', 10);
 
-    const [existing] = await db.execute(
-      'SELECT * FROM admins WHERE username = $1',
-      ['admin']
+    await db.execute(
+      `INSERT INTO admins (username, password)
+       VALUES ($1, $2)
+       ON CONFLICT (username)
+       DO UPDATE SET password = EXCLUDED.password`,
+      ['admin', hashed]
     );
 
-    if (existing.length === 0) {
-      const hashed = await bcrypt.hash('admin123', 10);
-
-      await db.execute(
-        'INSERT INTO admins (username, password) VALUES ($1, $2)',
-        ['admin', hashed]
-      );
-
-      console.log('✅ Admin created: admin / admin123');
-    } else {
-      console.log('ℹ️ Admin already exists');
-    }
+    console.log('✅ Admin ready: admin / feedback6969');
 
   } catch (err) {
-    console.error('❌ Admin creation error:', err);
+    console.error('❌ INIT ERROR:', err);
   }
 })();
 
@@ -127,7 +115,7 @@ app.use((req, res) => {
 // ── Start Server ───────────────────────────
 app.listen(PORT, () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`🚀 Server running`);
-  console.log(`🌐 Live URL will work on Render`);
+  console.log('🚀 Server running');
+  console.log('🌐 Live on Render');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 });
