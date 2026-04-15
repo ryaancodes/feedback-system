@@ -16,7 +16,7 @@ router.post('/login', async (req, res) => {
 
   try {
     const [rows] = await db.execute(
-      'SELECT id, username, password FROM admins WHERE username = ?',
+      'SELECT id, username, password FROM admins WHERE username = $1',
       [username.trim()]
     );
 
