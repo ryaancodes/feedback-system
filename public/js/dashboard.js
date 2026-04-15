@@ -1,149 +1,111 @@
-// ── Admin Dashboard ─────────────────────────
-
 const $ = id => document.getElementById(id);
 
-// ── Auth guard ──────────────────────────────
+// ── AUTH ──
 (async () => {
   try {
     const r = await fetch('/api/admin/check', { credentials: 'include' });
     const d = await r.json();
 
-    if (!d.success) return (window.location.href = '/admin');
-
-    $('adminUser').textContent = '👤 ' + d.username;
+    if (!d.success) window.location.href = '/admin';
+    else $('adminUser').textContent = '👤 ' + d.username;
   } catch {
     window.location.href = '/admin';
   }
 })();
 
-// ── Utils ───────────────────────────────────
+// ── HELPERS ──
 function fmtDate(str) {
   if (!str) return '-';
-  const date = new Date(str);
-  if (isNaN(date)) return '-';
-
-  return date.toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
+  const d = new Date(str);
+  return isNaN(d) ? '-' : d.toLocaleDateString('en-IN');
 }
 
 function badge(n) {
-  if (!n) return '-';
-  return `<span class="badge badge-${n}">${n} ★</span>`;
+  return n ? `<span>${n} ★</span>` : '-';
 }
 
-// ── Load Stats (simple, no charts) ──────────
-async function loadStats() {
-  try {
-    const r = await fetch('/api/feedback/analytics');
-    const d = await r.json();
+// ── LOAD ANALYTICS ──
+async function loadAnalytics() {
+  const r = await fetch('/api/feedback/analytics', { credentials: 'include' });
+  const d = await r.json();
 
-    if (!d.success) return;
+  if (!d.success) return;
 
-    const stats = d.data?.stats || {};
+  const s = d.data.stats;
 
-    $('statTotal').textContent = stats.total_feedback || 0;
-    $('statAvg').textContent   = stats.average_rating ? '★ ' + stats.average_rating : '—';
-    $('statFive').textContent  = stats.five_star || 0;
-    $('statOne').textContent   = stats.one_star || 0;
-
-  } catch (err) {
-    console.error(err);
-  }
+  $('statTotal').textContent = s.total_feedback || 0;
+  $('statAvg').textContent   = s.average_rating ? '★ ' + s.average_rating : '-';
+  $('statFive').textContent  = s.five_star || 0;
+  $('statOne').textContent   = s.one_star || 0;
 }
 
-// ── Load Feedback ───────────────────────────
+// ── LOAD FEEDBACK (MAIN FIX) ──
 async function loadFeedback() {
-  const search = $('searchInput')?.value.trim();
-  const rating = $('filterRating')?.value;
-  const sort   = $('sortOrder')?.value;
+  const search = $('searchInput').value;
+  const rating = $('filterRating').value;
+  const sort   = $('sortOrder').value;
 
-  const params = new URLSearchParams();
+  let url = '/api/feedback?';
 
-  if (search) params.append('search', search);
-  if (rating) params.append('rating', rating);
-  if (sort)   params.append('sort', sort);
+  if (search) url += `search=${encodeURIComponent(search)}&`;
+  if (rating) url += `rating=${rating}&`;
+  if (sort)   url += `sort=${sort}`;
+
+  console.log("API CALL:", url); // 🔥 DEBUG
 
   const body = $('tblBody');
   body.innerHTML = `<tr><td colspan="7">Loading...</td></tr>`;
 
   try {
-    const r = await fetch('/api/feedback?' + params.toString());
-    const data = await r.json();
+    const r = await fetch(url, { credentials: 'include' });
+    const d = await r.json();
 
-    if (!data.success) {
-      body.innerHTML = `<tr><td colspan="7">Error</td></tr>`;
-      return;
-    }
+    if (!d.success) throw new Error();
 
-    const rows = data.data || [];
-
-    if (!rows.length) {
-      body.innerHTML = `<tr><td colspan="7">No data</td></tr>`;
-      return;
-    }
+    const rows = d.data;
 
     body.innerHTML = rows.map((row, i) => `
       <tr>
         <td>${i + 1}</td>
         <td>${row.name || '-'}</td>
         <td>${row.email || '-'}</td>
-        <td>${row.rating ? badge(row.rating) : '-'}</td>
+        <td>${badge(row.rating)}</td>
         <td>${row.comments || '-'}</td>
         <td>${fmtDate(row.submitted_at)}</td>
-        <td>
-          <button onclick="deleteFeedback(${row.id})">Delete</button>
-        </td>
+        <td><button onclick="deleteFeedback(${row.id})">Delete</button></td>
       </tr>
     `).join('');
 
-  } catch (err) {
-    console.error(err);
-    body.innerHTML = `<tr><td colspan="7">Server error</td></tr>`;
+  } catch {
+    body.innerHTML = `<tr><td colspan="7">Error</td></tr>`;
   }
 }
 
-// ── Delete ─────────────────────────────────
+// ── DELETE ──
 async function deleteFeedback(id) {
-  if (!confirm('Delete this feedback?')) return;
+  if (!confirm('Delete?')) return;
 
-  try {
-    const r = await fetch(`/api/feedback/${id}`, {
-      method: 'DELETE'
-    });
+  await fetch(`/api/feedback/${id}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
 
-    const data = await r.json();
-
-    if (data.success) {
-      loadFeedback();
-      loadStats();
-    }
-
-  } catch (err) {
-    console.error(err);
-  }
+  loadFeedback();
+  loadAnalytics();
 }
 
-// ── Logout ─────────────────────────────────
-$('logoutBtn').addEventListener('click', async () => {
-  await fetch('/api/admin/logout', { method: 'POST' });
-  window.location.href = '/admin';
-});
+// ── EVENTS (THIS WAS YOUR MAIN ISSUE) ──
+$('searchInput').addEventListener('keyup', loadFeedback);
+$('filterRating').addEventListener('change', loadFeedback);
+$('sortOrder').addEventListener('change', loadFeedback);
 
-// ── Filters ────────────────────────────────
-$('searchInput')?.addEventListener('input', loadFeedback);
-$('filterRating')?.addEventListener('change', loadFeedback);
-$('sortOrder')?.addEventListener('change', loadFeedback);
-
-$('clearBtn')?.addEventListener('click', () => {
+$('clearBtn').addEventListener('click', () => {
   $('searchInput').value = '';
   $('filterRating').value = '';
   $('sortOrder').value = 'latest';
   loadFeedback();
 });
 
-// ── Init ───────────────────────────────────
-loadStats();
+// ── INIT ──
+loadAnalytics();
 loadFeedback();

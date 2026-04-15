@@ -8,7 +8,6 @@
 </head>
 <body>
 
-<!-- ── Navbar ─────────────────────────────────────────────── -->
 <nav class="navbar">
   <div class="navbar-brand">
     <span class="dot"></span>
@@ -16,114 +15,79 @@
   </div>
   <div class="navbar-actions">
     <span class="navbar-user" id="adminUser">Loading…</span>
-    <button class="btn btn-ghost" id="logoutBtn"
-            style="padding:8px 18px; font-size:0.82rem;">
+    <button class="btn btn-ghost" id="logoutBtn">
       Sign Out
     </button>
   </div>
 </nav>
 
-<!-- ── Main ───────────────────────────────────────────────── -->
 <div class="page-wrapper">
 
-  <!-- Stats Row -->
-  <p class="sec-label" style="margin-bottom:16px;">Overview</p>
+  <!-- Stats -->
+  <p class="sec-label">Overview</p>
   <div class="stats-grid">
     <div class="stat-card">
-      <span class="stat-icon">📋</span>
-      <span class="stat-label">Total Submissions</span>
-      <span class="stat-value" id="statTotal"><span class="spin"></span></span>
+      <span class="stat-label">Total</span>
+      <span id="statTotal">0</span>
     </div>
     <div class="stat-card">
-      <span class="stat-icon">⭐</span>
-      <span class="stat-label">Average Rating</span>
-      <span class="stat-value accent" id="statAvg">—</span>
+      <span class="stat-label">Avg</span>
+      <span id="statAvg">—</span>
     </div>
     <div class="stat-card">
-      <span class="stat-icon">🏆</span>
-      <span class="stat-label">5-Star Reviews</span>
-      <span class="stat-value teal" id="statFive">—</span>
+      <span class="stat-label">5★</span>
+      <span id="statFive">0</span>
     </div>
     <div class="stat-card">
-      <span class="stat-icon">⚡</span>
-      <span class="stat-label">1-Star Reviews</span>
-      <span class="stat-value" id="statOne">—</span>
+      <span class="stat-label">1★</span>
+      <span id="statOne">0</span>
     </div>
   </div>
 
-  <!-- Controls + Table -->
+  <!-- Controls -->
   <p class="sec-label">All Feedback</p>
+
   <div class="controls">
-    <div class="ctrl-wrap" style="flex:1; min-width:220px;">
-      <span class="ctrl-icon">🔍</span>
-      <input class="ctrl-input" type="text" id="searchInput"
-             placeholder="Search by name or email…"
-             style="width:100%">
-    </div>
+    <input type="text" id="searchInput" placeholder="Search name/email">
 
-    <select class="ctrl-select" id="filterRating">
-      <option value="">All Ratings</option>
-      <option value="5">★★★★★  5 Stars</option>
-      <option value="4">★★★★☆  4 Stars</option>
-      <option value="3">★★★☆☆  3 Stars</option>
-      <option value="2">★★☆☆☆  2 Stars</option>
-      <option value="1">★☆☆☆☆  1 Star</option>
+    <select id="filterRating">
+      <option value="">All</option>
+      <option value="5">5★</option>
+      <option value="4">4★</option>
+      <option value="3">3★</option>
+      <option value="2">2★</option>
+      <option value="1">1★</option>
     </select>
 
-    <select class="ctrl-select" id="sortOrder">
-      <option value="latest">↓ Latest First</option>
-      <option value="oldest">↑ Oldest First</option>
-      <option value="highest">▲ Highest Rating</option>
-      <option value="lowest">▼ Lowest Rating</option>
+    <select id="sortOrder">
+      <option value="latest">Latest</option>
+      <option value="oldest">Oldest</option>
+      <option value="highest">Highest</option>
+      <option value="lowest">Lowest</option>
     </select>
 
-    <button class="btn btn-ghost" id="clearBtn"
-            style="padding:10px 16px; font-size:0.84rem;">
-      Clear ✕
-    </button>
+    <button id="clearBtn">Clear</button>
   </div>
 
-  <div class="tbl-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Rating</th>
-          <th>Comments</th>
-          <th>Date</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="tblBody">
-        <tr><td colspan="7">
-          <div class="empty"><span class="spin"></span></div>
-        </td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p class="row-count" id="rowCount"></p>
+  <!-- Table -->
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Rating</th>
+        <th>Comments</th>
+        <th>Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="tblBody">
+      <tr><td colspan="7">Loading...</td></tr>
+    </tbody>
+  </table>
 
 </div>
-
-<!-- Delete Confirm Overlay -->
-<div class="overlay" id="deleteOverlay">
-  <div class="confirm-card">
-    <div class="warn-icon">🗑</div>
-    <h3>Delete this feedback?</h3>
-    <p>This action cannot be undone.</p>
-    <div class="confirm-btns">
-      <button class="btn btn-ghost" id="cancelDelete">Cancel</button>
-      <button class="btn btn-primary" id="confirmDelete"
-              style="background:var(--danger); color:#fff;">
-        Delete
-      </button>
-    </div>
-  </div>
-</div>
-
-<div class="toast-wrap" id="toastWrap"></div>
 
 <script src="/js/dashboard.js"></script>
 </body>
