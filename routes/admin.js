@@ -16,7 +16,7 @@ router.post('/login', async (req, res) => {
 
   try {
     const [rows] = await db.execute(
-      'SELECT id, username, password FROM admins WHERE username = $1',
+      'SELECT id, username, password FROM admins WHERE username = ?',
       [username.trim()]
     );
 
@@ -57,7 +57,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-
 // ── LOGOUT ────────────────────────────────────────
 router.post('/logout', (req, res) => {
   req.session.destroy(err => {
@@ -72,7 +71,6 @@ router.post('/logout', (req, res) => {
     return res.json({ success: true });
   });
 });
-
 
 // ── SESSION CHECK ─────────────────────────────────
 router.get('/check', (req, res) => {

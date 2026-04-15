@@ -8,14 +8,14 @@ router.post('/', async (req, res) => {
   const { name, email, rating, comments } = req.body;
 
   try {
-    const [rows] = await db.execute(
-      'INSERT INTO feedback (name, email, rating, comments) VALUES ($1, $2, $3, $4) RETURNING id',
+    const [result] = await db.execute(
+      'INSERT INTO feedback (name, email, rating, comments) VALUES (?, ?, ?, ?)',
       [name, email, rating, comments]
     );
 
     res.json({
       success: true,
-      id: rows[0].id
+      id: result.insertId   // ✅ MySQL way
     });
 
   } catch (err) {
@@ -35,20 +35,17 @@ router.get('/', async (req, res) => {
 
     let sql = 'SELECT * FROM feedback WHERE 1=1';
     const params = [];
-    let paramIndex = 1;
 
-    // 🔍 SEARCH
+    // 🔍 SEARCH (MySQL uses LIKE)
     if (search) {
-      sql += ` AND (name ILIKE $${paramIndex} OR email ILIKE $${paramIndex + 1})`;
+      sql += ' AND (name LIKE ? OR email LIKE ?)';
       params.push(`%${search}%`, `%${search}%`);
-      paramIndex += 2;
     }
 
     // ⭐ FILTER
     if (rating) {
-      sql += ` AND rating = $${paramIndex}`;
+      sql += ' AND rating = ?';
       params.push(Number(rating));
-      paramIndex++;
     }
 
     // ⬇️ SORT
@@ -88,11 +85,11 @@ router.get('/analytics', async (req, res) => {
       SELECT
         COUNT(*) AS total_feedback,
         ROUND(AVG(rating), 2) AS average_rating,
-        SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) AS five_star,
-        SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) AS four_star,
-        SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) AS three_star,
-        SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) AS two_star,
-        SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) AS one_star
+        SUM(rating = 5) AS five_star,
+        SUM(rating = 4) AS four_star,
+        SUM(rating = 3) AS three_star,
+        SUM(rating = 2) AS two_star,
+        SUM(rating = 1) AS one_star
       FROM feedback
     `);
 
@@ -127,7 +124,7 @@ router.get('/analytics', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     await db.execute(
-      'DELETE FROM feedback WHERE id = $1',
+      'DELETE FROM feedback WHERE id = ?',
       [req.params.id]
     );
 
