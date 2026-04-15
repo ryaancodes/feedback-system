@@ -39,7 +39,17 @@ router.get('/', async (req, res) => {
   try {
     const { search, rating, sort } = req.query;
 
-    let sql = 'SELECT * FROM feedback WHERE 1=1';
+    let sql = `
+      SELECT 
+        id,
+        name,
+        email,
+        rating,
+        comments,
+        submitted_at
+      FROM feedback WHERE 1=1
+    `;
+
     const params = [];
     let index = 1;
 
@@ -69,9 +79,19 @@ router.get('/', async (req, res) => {
 
     const rows = await db.execute(sql, params);
 
+    // 🔥 FINAL FIX: normalize data
+    const cleanRows = rows.map(r => ({
+      id: r.id,
+      name: r.name ?? r.Name ?? '-',
+      email: r.email ?? r.Email ?? '-',
+      rating: r.rating ?? 0,
+      comments: r.comments ?? r.Comments ?? '-',
+      submitted_at: r.submitted_at ?? r.submittedat ?? r.Submitted_At ?? null
+    }));
+
     res.json({
       success: true,
-      data: rows
+      data: cleanRows
     });
 
   } catch (err) {
