@@ -26,32 +26,38 @@ function badge(n) {
 
 // ── LOAD ANALYTICS ──
 async function loadAnalytics() {
-  const r = await fetch('/api/feedback/analytics', { credentials: 'include' });
-  const d = await r.json();
+  try {
+    const r = await fetch('/api/feedback/analytics', { credentials: 'include' });
+    const d = await r.json();
 
-  if (!d.success) return;
+    if (!d.success) return;
 
-  const s = d.data.stats;
+    const s = d.data.stats;
 
-  $('statTotal').textContent = s.total_feedback || 0;
-  $('statAvg').textContent   = s.average_rating ? '★ ' + s.average_rating : '-';
-  $('statFive').textContent  = s.five_star || 0;
-  $('statOne').textContent   = s.one_star || 0;
+    $('statTotal').textContent = s.total_feedback || 0;
+    $('statAvg').textContent   = s.average_rating ? '★ ' + s.average_rating : '-';
+    $('statFive').textContent  = s.five_star || 0;
+    $('statOne').textContent   = s.one_star || 0;
+  } catch (e) {
+    console.error(e);
+  }
 }
 
-// ── LOAD FEEDBACK (MAIN FIX) ──
+// ── LOAD FEEDBACK (FIXED) ──
 async function loadFeedback() {
-  const search = $('searchInput').value;
-  const rating = $('filterRating').value;
-  const sort   = $('sortOrder').value;
+  const search = $('searchInput')?.value.trim();
+  const rating = $('filterRating')?.value;
+  const sort   = $('sortOrder')?.value || 'latest';
 
-  let url = '/api/feedback?';
+  const params = new URLSearchParams();
 
-  if (search) url += `search=${encodeURIComponent(search)}&`;
-  if (rating) url += `rating=${rating}&`;
-  if (sort)   url += `sort=${sort}`;
+  if (search) params.append('search', search);
+  if (rating) params.append('rating', rating);
+  if (sort)   params.append('sort', sort);
 
-  console.log("API CALL:", url); // 🔥 DEBUG
+  const url = '/api/feedback?' + params.toString();
+
+  console.log("API CALL:", url);
 
   const body = $('tblBody');
   body.innerHTML = `<tr><td colspan="7">Loading...</td></tr>`;
@@ -62,7 +68,12 @@ async function loadFeedback() {
 
     if (!d.success) throw new Error();
 
-    const rows = d.data;
+    const rows = d.data || [];
+
+    if (!rows.length) {
+      body.innerHTML = `<tr><td colspan="7">No data</td></tr>`;
+      return;
+    }
 
     body.innerHTML = rows.map((row, i) => `
       <tr>
@@ -72,11 +83,14 @@ async function loadFeedback() {
         <td>${badge(row.rating)}</td>
         <td>${row.comments || '-'}</td>
         <td>${fmtDate(row.submitted_at)}</td>
-        <td><button onclick="deleteFeedback(${row.id})">Delete</button></td>
+        <td>
+          <button onclick="deleteFeedback(${row.id})">Delete</button>
+        </td>
       </tr>
     `).join('');
 
-  } catch {
+  } catch (err) {
+    console.error(err);
     body.innerHTML = `<tr><td colspan="7">Error</td></tr>`;
   }
 }
@@ -85,21 +99,31 @@ async function loadFeedback() {
 async function deleteFeedback(id) {
   if (!confirm('Delete?')) return;
 
-  await fetch(`/api/feedback/${id}`, {
-    method: 'DELETE',
-    credentials: 'include'
-  });
+  try {
+    await fetch(`/api/feedback/${id}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
 
-  loadFeedback();
-  loadAnalytics();
+    loadFeedback();
+    loadAnalytics();
+  } catch (e) {
+    console.error(e);
+  }
 }
 
-// ── EVENTS (THIS WAS YOUR MAIN ISSUE) ──
-$('searchInput').addEventListener('keyup', loadFeedback);
-$('filterRating').addEventListener('change', loadFeedback);
-$('sortOrder').addEventListener('change', loadFeedback);
+// ── EVENTS (FIXED PROPERLY) ──
+let debounceTimer;
 
-$('clearBtn').addEventListener('click', () => {
+$('searchInput')?.addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(loadFeedback, 300);
+});
+
+$('filterRating')?.addEventListener('change', loadFeedback);
+$('sortOrder')?.addEventListener('change', loadFeedback);
+
+$('clearBtn')?.addEventListener('click', () => {
   $('searchInput').value = '';
   $('filterRating').value = '';
   $('sortOrder').value = 'latest';
