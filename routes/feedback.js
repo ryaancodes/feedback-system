@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 
-
 // ── POST: Add feedback ─────────────────────────
 router.post('/', async (req, res) => {
   const { name, email, rating, comments } = req.body;
@@ -35,20 +34,20 @@ router.get('/', async (req, res) => {
 
     let sql = 'SELECT * FROM feedback WHERE 1=1';
     const params = [];
-    let i = 1;
+    let index = 1;
 
-    // 🔍 SEARCH (Postgres uses ILIKE)
+    // 🔍 SEARCH
     if (search) {
-      sql += ` AND (name ILIKE $${i} OR email ILIKE $${i + 1})`;
+      sql += ` AND (name ILIKE $${index} OR email ILIKE $${index + 1})`;
       params.push(`%${search}%`, `%${search}%`);
-      i += 2;
+      index += 2;
     }
 
     // ⭐ FILTER
     if (rating) {
-      sql += ` AND rating = $${i}`;
+      sql += ` AND rating = $${index}`;
       params.push(Number(rating));
-      i++;
+      index++;
     }
 
     // ⬇️ SORT
@@ -66,14 +65,14 @@ router.get('/', async (req, res) => {
 
     const [rows] = await db.execute(sql, params);
 
-    return res.json({
+    res.json({
       success: true,
       data: rows
     });
 
   } catch (err) {
     console.error('GET error:', err);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Fetch failed'
     });
@@ -108,14 +107,14 @@ router.get('/analytics', async (req, res) => {
       LIMIT 7
     `);
 
-    return res.json({
+    res.json({
       success: true,
       data: { stats, trend }
     });
 
   } catch (err) {
     console.error('Analytics error:', err);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Analytics failed'
     });
@@ -131,11 +130,11 @@ router.delete('/:id', async (req, res) => {
       [req.params.id]
     );
 
-    return res.json({ success: true });
+    res.json({ success: true });
 
   } catch (err) {
     console.error('DELETE error:', err);
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: 'Delete failed'
     });
