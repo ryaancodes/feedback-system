@@ -8,8 +8,15 @@ router.post('/', async (req, res) => {
 
   try {
     const [rows] = await db.execute(
-      'INSERT INTO feedback (name, email, rating, comments) VALUES ($1, $2, $3, $4) RETURNING id',
-      [name, email, rating, comments]
+      `INSERT INTO feedback (name, email, rating, comments)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id`,
+      [
+        name || null,
+        email || null,
+        rating || null,
+        comments || null
+      ]
     );
 
     res.json({
@@ -18,16 +25,16 @@ router.post('/', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('POST error:', err);
+    console.error('❌ POST ERROR:', err); // 🔥 logs
     res.status(500).json({
       success: false,
-      message: 'Insert failed'
+      message: err.message // 🔥 shows real error
     });
   }
 });
 
 
-// ── GET: Feedback with FILTER + SORT + SEARCH ─────────────────
+// ── GET: Feedback ─────────────────────────
 router.get('/', async (req, res) => {
   try {
     const { search, rating, sort } = req.query;
@@ -36,21 +43,18 @@ router.get('/', async (req, res) => {
     const params = [];
     let index = 1;
 
-    // 🔍 SEARCH
     if (search) {
       sql += ` AND (name ILIKE $${index} OR email ILIKE $${index + 1})`;
       params.push(`%${search}%`, `%${search}%`);
       index += 2;
     }
 
-    // ⭐ FILTER
     if (rating) {
       sql += ` AND rating = $${index}`;
       params.push(Number(rating));
       index++;
     }
 
-    // ⬇️ SORT
     if (sort === 'latest') {
       sql += ' ORDER BY submitted_at DESC';
     } else if (sort === 'oldest') {
@@ -74,13 +78,13 @@ router.get('/', async (req, res) => {
     console.error('GET error:', err);
     res.status(500).json({
       success: false,
-      message: 'Fetch failed'
+      message: err.message
     });
   }
 });
 
 
-// ── GET: Analytics ─────────────────────────────
+// ── GET: Analytics ─────────────────────────
 router.get('/analytics', async (req, res) => {
   try {
     const [statsRows] = await db.execute(`
@@ -116,13 +120,13 @@ router.get('/analytics', async (req, res) => {
     console.error('Analytics error:', err);
     res.status(500).json({
       success: false,
-      message: 'Analytics failed'
+      message: err.message
     });
   }
 });
 
 
-// ── DELETE ─────────────────────────────────────
+// ── DELETE ─────────────────────────
 router.delete('/:id', async (req, res) => {
   try {
     await db.execute(
@@ -136,7 +140,7 @@ router.delete('/:id', async (req, res) => {
     console.error('DELETE error:', err);
     res.status(500).json({
       success: false,
-      message: 'Delete failed'
+      message: err.message
     });
   }
 });
