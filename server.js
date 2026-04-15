@@ -7,13 +7,10 @@ const path = require('path');
 
 const feedbackRoutes = require('./routes/feedback');
 const adminRoutes = require('./routes/admin');
+const db = require('./config/db'); // ✅ ADD THIS
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// 🔥 DEBUG (check env loading)
-console.log("DB HOST:", process.env.DB_HOST);
-console.log("DB NAME:", process.env.DB_NAME);
 
 // ── Middleware ─────────────────────────────
 app.use(cors({
@@ -42,10 +39,37 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/admin', adminRoutes);
 
-// 🔥 TEST ROUTE (check DB connection manually)
+// 🔥 AUTO CREATE TABLE (FIX YOUR ERROR)
+(async () => {
+  try {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS feedback (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT,
+        rating INTEGER,
+        comments TEXT,
+        submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS admins (
+        id SERIAL PRIMARY KEY,
+        username TEXT UNIQUE,
+        password TEXT
+      );
+    `);
+
+    console.log('✅ Tables ready');
+  } catch (err) {
+    console.error('❌ Table creation error:', err);
+  }
+})();
+
+// 🔥 TEST ROUTE
 app.get('/test-db', async (req, res) => {
   try {
-    const db = require('./config/db');
     const [rows] = await db.execute('SELECT 1');
     res.json({ success: true, data: rows });
   } catch (err) {
@@ -75,10 +99,7 @@ app.use((req, res) => {
 // ── Start Server ───────────────────────────
 app.listen(PORT, () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📄 Home      → http://localhost:${PORT}/`);
-  console.log(`🔐 Admin     → http://localhost:${PORT}/admin`);
-  console.log(`📊 Dashboard → http://localhost:${PORT}/dashboard`);
-  console.log(`🧪 Test DB   → http://localhost:${PORT}/test-db`);
+  console.log(`🚀 Server running`);
+  console.log(`🌐 Live URL will work on Render`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 });
