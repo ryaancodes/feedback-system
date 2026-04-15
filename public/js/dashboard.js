@@ -20,10 +20,6 @@ function fmtDate(str) {
   return isNaN(d) ? '-' : d.toLocaleDateString('en-IN');
 }
 
-function badge(n) {
-  return n ? `<span>${n} ★</span>` : '-';
-}
-
 // ── LOAD ANALYTICS ──
 async function loadAnalytics() {
   try {
@@ -43,27 +39,13 @@ async function loadAnalytics() {
   }
 }
 
-// ── LOAD FEEDBACK (FIXED) ──
+// ── LOAD FEEDBACK (NO FILTERS) ──
 async function loadFeedback() {
-  const search = $('searchInput')?.value.trim();
-  const rating = $('filterRating')?.value;
-  const sort   = $('sortOrder')?.value || 'latest';
-
-  const params = new URLSearchParams();
-
-  if (search) params.append('search', search);
-  if (rating) params.append('rating', rating);
-  if (sort)   params.append('sort', sort);
-
-  const url = '/api/feedback?' + params.toString();
-
-  console.log("API CALL:", url);
-
   const body = $('tblBody');
   body.innerHTML = `<tr><td colspan="7">Loading...</td></tr>`;
 
   try {
-    const r = await fetch(url, { credentials: 'include' });
+    const r = await fetch('/api/feedback', { credentials: 'include' });
     const d = await r.json();
 
     if (!d.success) throw new Error();
@@ -80,7 +62,7 @@ async function loadFeedback() {
         <td>${i + 1}</td>
         <td>${row.name || '-'}</td>
         <td>${row.email || '-'}</td>
-        <td>${badge(row.rating)}</td>
+        <td>${row.rating || '-'} ★</td>
         <td>${row.comments || '-'}</td>
         <td>${fmtDate(row.submitted_at)}</td>
         <td>
@@ -112,22 +94,14 @@ async function deleteFeedback(id) {
   }
 }
 
-// ── EVENTS (FIXED PROPERLY) ──
-let debounceTimer;
+// ── LOGOUT (FIXED) ──
+$('logoutBtn').addEventListener('click', async () => {
+  await fetch('/api/admin/logout', {
+    method: 'POST',
+    credentials: 'include'
+  });
 
-$('searchInput')?.addEventListener('input', () => {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(loadFeedback, 300);
-});
-
-$('filterRating')?.addEventListener('change', loadFeedback);
-$('sortOrder')?.addEventListener('change', loadFeedback);
-
-$('clearBtn')?.addEventListener('click', () => {
-  $('searchInput').value = '';
-  $('filterRating').value = '';
-  $('sortOrder').value = 'latest';
-  loadFeedback();
+  window.location.href = '/admin';
 });
 
 // ── INIT ──
