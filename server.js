@@ -67,6 +67,34 @@ app.use('/api/admin', adminRoutes);
   }
 })();
 
+// 🔥 AUTO CREATE ADMIN (only if not exists)
+(async () => {
+  try {
+    const bcrypt = require('bcrypt');
+
+    const [existing] = await db.execute(
+      'SELECT * FROM admins WHERE username = $1',
+      ['admin']
+    );
+
+    if (existing.length === 0) {
+      const hashed = await bcrypt.hash('admin123', 10);
+
+      await db.execute(
+        'INSERT INTO admins (username, password) VALUES ($1, $2)',
+        ['admin', hashed]
+      );
+
+      console.log('✅ Admin created: admin / admin123');
+    } else {
+      console.log('ℹ️ Admin already exists');
+    }
+
+  } catch (err) {
+    console.error('❌ Admin creation error:', err);
+  }
+})();
+
 // 🔥 TEST ROUTE
 app.get('/test-db', async (req, res) => {
   try {
