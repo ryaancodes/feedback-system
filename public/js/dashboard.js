@@ -18,13 +18,17 @@ const $ = id => document.getElementById(id);
 
 // ── Utils ─────────────────────────────────────────────────────
 function esc(s) {
+  if (!s) return '-'; // ✅ FIX
   const d = document.createElement('div');
   d.appendChild(document.createTextNode(String(s)));
   return d.innerHTML;
 }
 
 function fmtDate(str) {
-  return new Date(str).toLocaleDateString('en-IN', {
+  if (!str) return '-'; // ✅ FIX
+  const date = new Date(str);
+  if (isNaN(date)) return '-'; // ✅ FIX
+  return date.toLocaleDateString('en-IN', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -32,6 +36,7 @@ function fmtDate(str) {
 }
 
 function badge(n) {
+  if (!n) return '-'; // ✅ FIX
   return `<span class="badge badge-${n}">${n} ★</span>`;
 }
 
@@ -43,7 +48,7 @@ async function loadAnalytics() {
 
     if (!d.success) return;
 
-    const stats = d.data.stats || {};
+    const stats = d.data?.stats || {}; // ✅ FIX
 
     $('statTotal').textContent = stats.total_feedback || 0;
     $('statAvg').textContent   = stats.average_rating ? '★ ' + stats.average_rating : '—';
@@ -55,7 +60,7 @@ async function loadAnalytics() {
   }
 }
 
-// ── 🔥 FIXED Load Feedback (IMPORTANT) ─────────────────────────
+// ── Load Feedback ─────────────────────────────────────────────
 async function loadFeedback() {
   const search = $('searchInput')?.value.trim();
   const rating = $('filterRating')?.value;
@@ -66,8 +71,6 @@ async function loadFeedback() {
   if (search) params.append('search', search);
   if (rating) params.append('rating', rating);
   if (sort)   params.append('sort', sort);
-
-  console.log("QUERY:", params.toString());
 
   const body = $('tblBody');
   body.innerHTML = `<tr><td colspan="7">Loading...</td></tr>`;
@@ -84,7 +87,7 @@ async function loadFeedback() {
       return;
     }
 
-    const rows = data.data;
+    const rows = data.data || []; // ✅ FIX
 
     if (!rows.length) {
       body.innerHTML = `<tr><td colspan="7">No data</td></tr>`;
@@ -143,7 +146,7 @@ $('logoutBtn').addEventListener('click', async () => {
   window.location.href = '/admin';
 });
 
-// ── 🔥 FILTER LISTENERS ───────────────────────────────────────
+// ── Filters ───────────────────────────────────────────────────
 $('searchInput')?.addEventListener('input', loadFeedback);
 $('filterRating')?.addEventListener('change', loadFeedback);
 $('sortOrder')?.addEventListener('change', loadFeedback);
