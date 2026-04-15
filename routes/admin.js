@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
 
-// ── LOGIN ──
+// LOGIN
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -13,32 +13,32 @@ router.post('/login', async (req, res) => {
       [username]
     );
 
-    if (!rows.length) {
-      return res.json({ success: false, message: 'Invalid username or password' });
+    const user = rows[0]; // ✅ IMPORTANT
+
+    if (!user) {
+      return res.json({ success: false, message: 'Invalid credentials' });
     }
 
-    const admin = rows[0];
-
-    const match = await bcrypt.compare(password, admin.password);
+    const match = await bcrypt.compare(password, user.password);
 
     if (!match) {
-      return res.json({ success: false, message: 'Invalid username or password' });
+      return res.json({ success: false, message: 'Invalid credentials' });
     }
 
     req.session.user = {
-      id: admin.id,
-      username: admin.username
+      id: user.id,
+      username: user.username
     };
 
     res.json({ success: true });
 
   } catch (err) {
-    console.error('LOGIN ERROR:', err);
-    res.status(500).json({ success: false });
+    console.error('LOGIN ERROR:', err); // 🔥 WILL SHOW IN LOGS
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// ── CHECK ──
+// CHECK LOGIN
 router.get('/check', (req, res) => {
   if (req.session.user) {
     return res.json({
@@ -46,11 +46,10 @@ router.get('/check', (req, res) => {
       username: req.session.user.username
     });
   }
-
   res.json({ success: false });
 });
 
-// ── LOGOUT ──
+// LOGOUT
 router.post('/logout', (req, res) => {
   req.session.destroy(() => {
     res.json({ success: true });
