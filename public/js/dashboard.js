@@ -1,8 +1,8 @@
-// ── Admin Dashboard ───────────────────────────────────────────
+// ── Admin Dashboard ─────────────────────────
 
 const $ = id => document.getElementById(id);
 
-// ── Auth guard ────────────────────────────────────────────────
+// ── Auth guard ──────────────────────────────
 (async () => {
   try {
     const r = await fetch('/api/admin/check', { credentials: 'include' });
@@ -16,18 +16,12 @@ const $ = id => document.getElementById(id);
   }
 })();
 
-// ── Utils ─────────────────────────────────────────────────────
-function esc(s) {
-  if (!s) return '-'; // ✅ FIX
-  const d = document.createElement('div');
-  d.appendChild(document.createTextNode(String(s)));
-  return d.innerHTML;
-}
-
+// ── Utils ───────────────────────────────────
 function fmtDate(str) {
-  if (!str) return '-'; // ✅ FIX
+  if (!str) return '-';
   const date = new Date(str);
-  if (isNaN(date)) return '-'; // ✅ FIX
+  if (isNaN(date)) return '-';
+
   return date.toLocaleDateString('en-IN', {
     day: '2-digit',
     month: 'short',
@@ -36,11 +30,11 @@ function fmtDate(str) {
 }
 
 function badge(n) {
-  if (!n) return '-'; // ✅ FIX
+  if (!n) return '-';
   return `<span class="badge badge-${n}">${n} ★</span>`;
 }
 
-// ── Load Analytics ────────────────────────────────────────────
+// ── Load Analytics ──────────────────────────
 async function loadAnalytics() {
   try {
     const r = await fetch('/api/feedback/analytics', { credentials: 'include' });
@@ -48,7 +42,7 @@ async function loadAnalytics() {
 
     if (!d.success) return;
 
-    const stats = d.data?.stats || {}; // ✅ FIX
+    const stats = d.data?.stats || {};
 
     $('statTotal').textContent = stats.total_feedback || 0;
     $('statAvg').textContent   = stats.average_rating ? '★ ' + stats.average_rating : '—';
@@ -60,7 +54,7 @@ async function loadAnalytics() {
   }
 }
 
-// ── Load Feedback ─────────────────────────────────────────────
+// ── Load Feedback ───────────────────────────
 async function loadFeedback() {
   const search = $('searchInput')?.value.trim();
   const rating = $('filterRating')?.value;
@@ -87,7 +81,7 @@ async function loadFeedback() {
       return;
     }
 
-    const rows = data.data || []; // ✅ FIX
+    const rows = data.data || [];
 
     if (!rows.length) {
       body.innerHTML = `<tr><td colspan="7">No data</td></tr>`;
@@ -97,10 +91,10 @@ async function loadFeedback() {
     body.innerHTML = rows.map((row, i) => `
       <tr>
         <td>${i + 1}</td>
-        <td>${esc(row.name)}</td>
-        <td>${esc(row.email)}</td>
-        <td>${badge(row.rating)}</td>
-        <td>${esc(row.comments)}</td>
+        <td>${row.name || '-'}</td>
+        <td>${row.email || '-'}</td>
+        <td>${row.rating ? badge(row.rating) : '-'}</td>
+        <td>${row.comments || '-'}</td>
         <td>${fmtDate(row.submitted_at)}</td>
         <td>
           <button onclick="deleteFeedback(${row.id})">Delete</button>
@@ -114,7 +108,7 @@ async function loadFeedback() {
   }
 }
 
-// ── Delete ────────────────────────────────────────────────────
+// ── Delete ─────────────────────────────────
 async function deleteFeedback(id) {
   if (!confirm('Delete this feedback?')) return;
 
@@ -136,7 +130,7 @@ async function deleteFeedback(id) {
   }
 }
 
-// ── Logout ────────────────────────────────────────────────────
+// ── Logout ─────────────────────────────────
 $('logoutBtn').addEventListener('click', async () => {
   await fetch('/api/admin/logout', {
     method: 'POST',
@@ -146,7 +140,7 @@ $('logoutBtn').addEventListener('click', async () => {
   window.location.href = '/admin';
 });
 
-// ── Filters ───────────────────────────────────────────────────
+// ── Filters ────────────────────────────────
 $('searchInput')?.addEventListener('input', loadFeedback);
 $('filterRating')?.addEventListener('change', loadFeedback);
 $('sortOrder')?.addEventListener('change', loadFeedback);
@@ -158,6 +152,6 @@ $('clearBtn')?.addEventListener('click', () => {
   loadFeedback();
 });
 
-// ── Init ──────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────
 loadAnalytics();
 loadFeedback();
