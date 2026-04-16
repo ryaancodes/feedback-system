@@ -6,8 +6,10 @@
   <title>Dashboard — Feedback System</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
 
+<!-- ── Navbar ── -->
 <nav class="navbar">
   <div class="navbar-brand">
     <span class="dot"></span>
@@ -21,6 +23,7 @@
   </div>
 </nav>
 
+<!-- ── Main ── -->
 <div class="page-wrapper">
 
   <!-- Stats -->
@@ -28,19 +31,19 @@
   <div class="stats-grid">
     <div class="stat-card">
       <span class="stat-label">Total</span>
-      <span id="statTotal">0</span>
+      <span class="stat-value" id="statTotal"></span>
     </div>
     <div class="stat-card">
       <span class="stat-label">Avg</span>
-      <span id="statAvg">—</span>
+      <span class="stat-value accent" id="statAvg"></span>
     </div>
     <div class="stat-card">
       <span class="stat-label">5★</span>
-      <span id="statFive">0</span>
+      <span class="stat-value teal" id="statFive"></span>
     </div>
     <div class="stat-card">
       <span class="stat-label">1★</span>
-      <span id="statOne">0</span>
+      <span class="stat-value" id="statOne"></span>
     </div>
   </div>
 
@@ -48,44 +51,66 @@
   <p class="sec-label">All Feedback</p>
 
   <div class="controls">
-    <input type="text" id="searchInput" placeholder="Search name/email">
 
-    <select id="filterRating">
+    <!-- Search -->
+    <div class="ctrl-wrap">
+      <span class="ctrl-icon">🔍</span>
+      <input 
+        class="ctrl-input"
+        type="text"
+        id="searchInput"
+        placeholder="Search by name or email…"
+      >
+    </div>
+
+    <!-- Filter -->
+    <select class="ctrl-select" id="filterRating">
       <option value="">All</option>
-      <option value="5">5★</option>
-      <option value="4">4★</option>
-      <option value="3">3★</option>
-      <option value="2">2★</option>
-      <option value="1">1★</option>
+      <option value="5">★★★★★</option>
+      <option value="4">★★★★☆</option>
+      <option value="3">★★★☆☆</option>
+      <option value="2">★★☆☆☆</option>
+      <option value="1">★☆☆☆☆</option>
     </select>
 
-    <select id="sortOrder">
+    <!-- Sort -->
+    <select class="ctrl-select" id="sortOrder">
       <option value="latest">Latest</option>
       <option value="oldest">Oldest</option>
       <option value="highest">Highest</option>
       <option value="lowest">Lowest</option>
     </select>
 
-    <button id="clearBtn">Clear</button>
+    <!-- Clear -->
+    <button class="btn btn-ghost" id="clearBtn">Clear</button>
+
   </div>
 
   <!-- Table -->
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Rating</th>
-        <th>Comments</th>
-        <th>Date</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="tblBody">
-      <tr><td colspan="7">Loading...</td></tr>
-    </tbody>
-  </table>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Rating</th>
+          <th>Comments</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="tblBody">
+        <tr>
+          <td colspan="7">
+            <div class="empty">
+              <span class="spin"></span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
 </div>
 

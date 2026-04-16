@@ -20,6 +20,10 @@ function fmtDate(str) {
   return isNaN(d) ? '-' : d.toLocaleDateString('en-IN');
 }
 
+function badge(n) {
+  return n ? `${n} ★` : '-';
+}
+
 // ── LOAD ANALYTICS ──
 async function loadAnalytics() {
   try {
@@ -34,23 +38,37 @@ async function loadAnalytics() {
     $('statAvg').textContent   = s.average_rating ? '★ ' + s.average_rating : '-';
     $('statFive').textContent  = s.five_star || 0;
     $('statOne').textContent   = s.one_star || 0;
+
   } catch (e) {
     console.error(e);
   }
 }
 
-// ── LOAD FEEDBACK (NO FILTERS) ──
+// ── MAIN FIXED LOAD ──
 async function loadFeedback() {
+  const search = $('searchInput').value.trim();
+  const rating = $('filterRating').value;
+  const sort   = $('sortOrder').value;
+
+  const params = new URLSearchParams();
+
+  if (search) params.append('search', search);
+  if (rating) params.append('rating', rating);
+  if (sort)   params.append('sort', sort);
+
+  const url = '/api/feedback?' + params.toString();
+  console.log("CALL:", url);
+
   const body = $('tblBody');
   body.innerHTML = `<tr><td colspan="7">Loading...</td></tr>`;
 
   try {
-    const r = await fetch('/api/feedback', { credentials: 'include' });
+    const r = await fetch(url, { credentials: 'include' });
     const d = await r.json();
 
     if (!d.success) throw new Error();
 
-    const rows = d.data || [];
+    const rows = d.data;
 
     if (!rows.length) {
       body.innerHTML = `<tr><td colspan="7">No data</td></tr>`;
@@ -62,12 +80,10 @@ async function loadFeedback() {
         <td>${i + 1}</td>
         <td>${row.name || '-'}</td>
         <td>${row.email || '-'}</td>
-        <td>${row.rating || '-'} ★</td>
+        <td>${badge(row.rating)}</td>
         <td>${row.comments || '-'}</td>
         <td>${fmtDate(row.submitted_at)}</td>
-        <td>
-          <button onclick="deleteFeedback(${row.id})">Delete</button>
-        </td>
+        <td><button onclick="deleteFeedback(${row.id})">Delete</button></td>
       </tr>
     `).join('');
 
@@ -81,27 +97,25 @@ async function loadFeedback() {
 async function deleteFeedback(id) {
   if (!confirm('Delete?')) return;
 
-  try {
-    await fetch(`/api/feedback/${id}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
-
-    loadFeedback();
-    loadAnalytics();
-  } catch (e) {
-    console.error(e);
-  }
-}
-
-// ── LOGOUT (FIXED) ──
-$('logoutBtn').addEventListener('click', async () => {
-  await fetch('/api/admin/logout', {
-    method: 'POST',
+  await fetch(`/api/feedback/${id}`, {
+    method: 'DELETE',
     credentials: 'include'
   });
 
-  window.location.href = '/admin';
+  loadFeedback();
+  loadAnalytics();
+}
+
+// ── EVENTS (CRITICAL FIX) ──
+$('searchInput').addEventListener('input', loadFeedback);
+$('filterRating').addEventListener('change', loadFeedback);
+$('sortOrder').addEventListener('change', loadFeedback);
+
+$('clearBtn').addEventListener('click', () => {
+  $('searchInput').value = '';
+  $('filterRating').value = '';
+  $('sortOrder').value = 'latest';
+  loadFeedback();
 });
 
 // ── INIT ──
