@@ -31,19 +31,19 @@
   <div class="stats-grid">
     <div class="stat-card">
       <span class="stat-label">Total</span>
-      <span class="stat-value" id="statTotal"></span>
+      <span class="stat-value" id="statTotal">—</span>
     </div>
     <div class="stat-card">
       <span class="stat-label">Avg</span>
-      <span class="stat-value accent" id="statAvg"></span>
+      <span class="stat-value accent" id="statAvg">—</span>
     </div>
     <div class="stat-card">
       <span class="stat-label">5★</span>
-      <span class="stat-value teal" id="statFive"></span>
+      <span class="stat-value teal" id="statFive">—</span>
     </div>
     <div class="stat-card">
       <span class="stat-label">1★</span>
-      <span class="stat-value" id="statOne"></span>
+      <span class="stat-value" id="statOne">—</span>
     </div>
   </div>
 
@@ -53,36 +53,40 @@
   <div class="controls">
 
     <!-- Search -->
-    <div class="ctrl-wrap">
+    <div class="ctrl-wrap" style="flex:1; min-width:220px;">
       <span class="ctrl-icon">🔍</span>
       <input 
         class="ctrl-input"
         type="text"
         id="searchInput"
         placeholder="Search by name or email…"
+        style="width:100%"
       >
     </div>
 
     <!-- Filter -->
     <select class="ctrl-select" id="filterRating">
-      <option value="">All</option>
-      <option value="5">★★★★★</option>
-      <option value="4">★★★★☆</option>
-      <option value="3">★★★☆☆</option>
-      <option value="2">★★☆☆☆</option>
-      <option value="1">★☆☆☆☆</option>
+      <option value="">All Ratings</option>
+      <option value="5">★★★★★  5 Stars</option>
+      <option value="4">★★★★☆  4 Stars</option>
+      <option value="3">★★★☆☆  3 Stars</option>
+      <option value="2">★★☆☆☆  2 Stars</option>
+      <option value="1">★☆☆☆☆  1 Star</option>
     </select>
 
     <!-- Sort -->
     <select class="ctrl-select" id="sortOrder">
-      <option value="latest">Latest</option>
-      <option value="oldest">Oldest</option>
-      <option value="highest">Highest</option>
-      <option value="lowest">Lowest</option>
+      <option value="latest">↓ Latest First</option>
+      <option value="oldest">↑ Oldest First</option>
+      <option value="highest">▲ Highest Rating</option>
+      <option value="lowest">▼ Lowest Rating</option>
     </select>
 
     <!-- Clear -->
-    <button class="btn btn-ghost" id="clearBtn">Clear</button>
+    <button class="btn btn-ghost" id="clearBtn"
+            style="padding:10px 16px; font-size:0.84rem;">
+      Clear ✕
+    </button>
 
   </div>
 

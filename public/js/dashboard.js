@@ -1,3 +1,4 @@
+// ── SAFE SELECTOR ──
 const $ = id => document.getElementById(id);
 
 // ── AUTH ──
@@ -7,7 +8,7 @@ const $ = id => document.getElementById(id);
     const d = await r.json();
 
     if (!d.success) window.location.href = '/admin';
-    else $('adminUser').textContent = '👤 ' + d.username;
+    else if ($('adminUser')) $('adminUser').textContent = '👤 ' + d.username;
   } catch {
     window.location.href = '/admin';
   }
@@ -21,10 +22,10 @@ function fmtDate(str) {
 }
 
 function badge(n) {
-  return n ? `${n} ★` : '-';
+  return n ? `<span class="badge badge-${n}">${n} ★</span>` : '-';
 }
 
-// ── LOAD ANALYTICS ──
+// ── ANALYTICS ──
 async function loadAnalytics() {
   try {
     const r = await fetch('/api/feedback/analytics', { credentials: 'include' });
@@ -34,41 +35,39 @@ async function loadAnalytics() {
 
     const s = d.data.stats;
 
-    $('statTotal').textContent = s.total_feedback || 0;
-    $('statAvg').textContent   = s.average_rating ? '★ ' + s.average_rating : '-';
-    $('statFive').textContent  = s.five_star || 0;
-    $('statOne').textContent   = s.one_star || 0;
+    if ($('statTotal')) $('statTotal').textContent = s.total_feedback || 0;
+    if ($('statAvg'))   $('statAvg').textContent   = s.average_rating ? '★ ' + s.average_rating : '-';
+    if ($('statFive'))  $('statFive').textContent  = s.five_star || 0;
+    if ($('statOne'))   $('statOne').textContent   = s.one_star || 0;
 
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    console.error(err);
   }
 }
 
-// ── MAIN FIXED LOAD ──
+// ── FEEDBACK ──
 async function loadFeedback() {
-  const search = $('searchInput').value.trim();
-  const rating = $('filterRating').value;
-  const sort   = $('sortOrder').value;
-
-  const params = new URLSearchParams();
-
-  if (search) params.append('search', search);
-  if (rating) params.append('rating', rating);
-  if (sort)   params.append('sort', sort);
-
-  const url = '/api/feedback?' + params.toString();
-  console.log("CALL:", url);
-
-  const body = $('tblBody');
-  body.innerHTML = `<tr><td colspan="7">Loading...</td></tr>`;
-
   try {
-    const r = await fetch(url, { credentials: 'include' });
-    const d = await r.json();
+    const search = $('searchInput')?.value || '';
+    const rating = $('filterRating')?.value || '';
+    const sort   = $('sortOrder')?.value || '';
 
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (rating) params.append('rating', rating);
+    if (sort)   params.append('sort', sort);
+
+    const r = await fetch('/api/feedback?' + params.toString(), {
+      credentials: 'include'
+    });
+
+    const d = await r.json();
     if (!d.success) throw new Error();
 
-    const rows = d.data;
+    const rows = d.data || [];
+    const body = $('tblBody');
+
+    if (!body) return;
 
     if (!rows.length) {
       body.innerHTML = `<tr><td colspan="7">No data</td></tr>`;
@@ -89,7 +88,8 @@ async function loadFeedback() {
 
   } catch (err) {
     console.error(err);
-    body.innerHTML = `<tr><td colspan="7">Error</td></tr>`;
+    const body = $('tblBody');
+    if (body) body.innerHTML = `<tr><td colspan="7">Error</td></tr>`;
   }
 }
 
@@ -106,16 +106,28 @@ async function deleteFeedback(id) {
   loadAnalytics();
 }
 
-// ── EVENTS (CRITICAL FIX) ──
-$('searchInput').addEventListener('input', loadFeedback);
-$('filterRating').addEventListener('change', loadFeedback);
-$('sortOrder').addEventListener('change', loadFeedback);
+// ── EVENTS (SAFE) ──
+window.addEventListener('DOMContentLoaded', () => {
 
-$('clearBtn').addEventListener('click', () => {
-  $('searchInput').value = '';
-  $('filterRating').value = '';
-  $('sortOrder').value = 'latest';
-  loadFeedback();
+  $('searchInput')?.addEventListener('input', loadFeedback);
+  $('filterRating')?.addEventListener('change', loadFeedback);
+  $('sortOrder')?.addEventListener('change', loadFeedback);
+
+  $('clearBtn')?.addEventListener('click', () => {
+    if ($('searchInput')) $('searchInput').value = '';
+    if ($('filterRating')) $('filterRating').value = '';
+    if ($('sortOrder')) $('sortOrder').value = 'latest';
+    loadFeedback();
+  });
+
+  $('logoutBtn')?.addEventListener('click', async () => {
+    await fetch('/api/admin/logout', {
+      method: 'POST',
+      credentials: 'include'
+    });
+    window.location.href = '/admin';
+  });
+
 });
 
 // ── INIT ──

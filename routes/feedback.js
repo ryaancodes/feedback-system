@@ -24,12 +24,47 @@ router.post('/', async (req, res) => {
 });
 
 
-// ── GET ──
+// ── GET (FIXED) ──
 router.get('/', async (req, res) => {
   try {
-    const rows = await db.execute(
-      'SELECT * FROM feedback ORDER BY id DESC'
-    );
+    const { search, rating, sort } = req.query;
+
+    let query = `SELECT * FROM feedback`;
+    let conditions = [];
+    let values = [];
+    let idx = 1;
+
+    if (search) {
+      conditions.push(`(LOWER(name) LIKE LOWER($${idx}) OR LOWER(email) LIKE LOWER($${idx}))`);
+      values.push(`%${search}%`);
+      idx++;
+    }
+
+    if (rating) {
+      conditions.push(`rating = $${idx}`);
+      values.push(rating);
+      idx++;
+    }
+
+    if (conditions.length) {
+      query += ` WHERE ` + conditions.join(' AND ');
+    }
+
+    switch (sort) {
+      case 'oldest':
+        query += ` ORDER BY submitted_at ASC`;
+        break;
+      case 'highest':
+        query += ` ORDER BY rating DESC`;
+        break;
+      case 'lowest':
+        query += ` ORDER BY rating ASC`;
+        break;
+      default:
+        query += ` ORDER BY submitted_at DESC`;
+    }
+
+    const rows = await db.execute(query, values);
 
     res.json({ success: true, data: rows });
 
@@ -52,20 +87,9 @@ router.get('/analytics', async (req, res) => {
       FROM feedback
     `);
 
-    const trend = await db.execute(`
-      SELECT DATE(submitted_at) AS day, COUNT(*) AS count
-      FROM feedback
-      GROUP BY day
-      ORDER BY day ASC
-      LIMIT 7
-    `);
-
     res.json({
       success: true,
-      data: {
-        stats: stats[0],
-        trend
-      }
+      data: { stats: stats[0] }
     });
 
   } catch (err) {

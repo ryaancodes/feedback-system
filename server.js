@@ -13,7 +13,7 @@ const db = require('./config/db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Middleware ─────────────────────────────
+// ── Middleware ──
 app.use(cors({
   origin: true,
   credentials: true
@@ -22,7 +22,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ── Session ────────────────────────────────
+// ── Session ──
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
@@ -33,17 +33,16 @@ app.use(session({
   }
 }));
 
-// ── Static Files ───────────────────────────
+// ── Static Files ──
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── API Routes ─────────────────────────────
+// ── API Routes ──
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/admin', adminRoutes);
 
-// 🔥 INIT DB (tables + admin fix)
+// ── INIT DB ──
 (async () => {
   try {
-    // Create tables
     await db.execute(`
       CREATE TABLE IF NOT EXISTS feedback (
         id SERIAL PRIMARY KEY,
@@ -65,7 +64,6 @@ app.use('/api/admin', adminRoutes);
 
     console.log('✅ Tables ready');
 
-    // 🔥 FORCE FIX ADMIN PASSWORD (your actual password)
     const hashed = await bcrypt.hash('feedback6969', 10);
 
     await db.execute(
@@ -83,10 +81,10 @@ app.use('/api/admin', adminRoutes);
   }
 })();
 
-// 🔥 TEST ROUTE
+// ── TEST ROUTE ──
 app.get('/test-db', async (req, res) => {
   try {
-    const [rows] = await db.execute('SELECT 1');
+    const rows = await db.execute('SELECT 1');
     res.json({ success: true, data: rows });
   } catch (err) {
     console.error(err);
@@ -94,7 +92,7 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
-// ── Page Routes ────────────────────────────
+// ── Page Routes ──
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -107,15 +105,12 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'pages', 'dashboard.html'));
 });
 
-// ── 404 ────────────────────────────────────
+// ── 404 ──
 app.use((req, res) => {
   res.status(404).send('Page not found');
 });
 
-// ── Start Server ───────────────────────────
+// ── Start Server ──
 app.listen(PORT, () => {
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('🚀 Server running');
-  console.log('🌐 Live on Render');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`Server running on http://localhost:${PORT}`);
 });
