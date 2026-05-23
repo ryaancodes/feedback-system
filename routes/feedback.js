@@ -8,14 +8,13 @@ router.post('/', async (req, res) => {
   const { name, email, rating, comments } = req.body;
 
   try {
-    const rows = await db.execute(
+    const result = await db.execute(
       `INSERT INTO feedback (name, email, rating, comments)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id`,
+       VALUES (?, ?, ?, ?)`,
       [name, email, rating, comments]
     );
 
-    res.json({ success: true, id: rows[0].id });
+    res.json({ success: true, id: result.insertId });
 
   } catch (err) {
     console.error('POST error:', err);
@@ -24,7 +23,7 @@ router.post('/', async (req, res) => {
 });
 
 
-// ── GET (FIXED) ──
+// ── GET ──
 router.get('/', async (req, res) => {
   try {
     const { search, rating, sort } = req.query;
@@ -32,18 +31,15 @@ router.get('/', async (req, res) => {
     let query = `SELECT * FROM feedback`;
     let conditions = [];
     let values = [];
-    let idx = 1;
 
     if (search) {
-      conditions.push(`(LOWER(name) LIKE LOWER($${idx}) OR LOWER(email) LIKE LOWER($${idx}))`);
-      values.push(`%${search}%`);
-      idx++;
+      conditions.push(`(LOWER(name) LIKE ? OR LOWER(email) LIKE ?)`);
+      values.push(`%${search}%`, `%${search}%`);
     }
 
     if (rating) {
-      conditions.push(`rating = $${idx}`);
+      conditions.push(`rating = ?`);
       values.push(rating);
-      idx++;
     }
 
     if (conditions.length) {
@@ -103,7 +99,7 @@ router.get('/analytics', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     await db.execute(
-      'DELETE FROM feedback WHERE id = $1',
+      'DELETE FROM feedback WHERE id = ?',
       [req.params.id]
     );
 

@@ -11,7 +11,7 @@ const adminRoutes = require('./routes/admin');
 const db = require('./config/db');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // ── Middleware ──
 app.use(cors({
@@ -40,26 +40,34 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/admin', adminRoutes);
 
+// ── AUTH MIDDLEWARE ──
+const requireAuth = (req, res, next) => {
+  if (!req.session.admin) {
+    return res.redirect('/admin');
+  }
+  next();
+};
+
 // ── INIT DB ──
 (async () => {
   try {
     await db.execute(`
       CREATE TABLE IF NOT EXISTS feedback (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT,
-        rating INTEGER,
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255),
+        rating INT,
         comments TEXT,
         submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+      )
     `);
 
     await db.execute(`
       CREATE TABLE IF NOT EXISTS admins (
-        id SERIAL PRIMARY KEY,
-        username TEXT UNIQUE,
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255) UNIQUE,
         password TEXT
-      );
+      )
     `);
 
     console.log('✅ Tables ready');
@@ -68,9 +76,8 @@ app.use('/api/admin', adminRoutes);
 
     await db.execute(
       `INSERT INTO admins (username, password)
-       VALUES ($1, $2)
-       ON CONFLICT (username)
-       DO UPDATE SET password = EXCLUDED.password`,
+       VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE password = VALUES(password)`,
       ['admin', hashed]
     );
 
@@ -87,7 +94,6 @@ app.get('/test-db', async (req, res) => {
     const rows = await db.execute('SELECT 1');
     res.json({ success: true, data: rows });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -101,7 +107,8 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'pages', 'admin-login.html'));
 });
 
-app.get('/dashboard', (req, res) => {
+// 🔥 PROTECTED ROUTE
+app.get('/dashboard', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'pages', 'dashboard.html'));
 });
 
@@ -112,5 +119,5 @@ app.use((req, res) => {
 
 // ── Start Server ──
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

@@ -3,53 +3,50 @@ const router = express.Router();
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
 
-// LOGIN
+// ── LOGIN ──
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
     const rows = await db.execute(
-      'SELECT * FROM admins WHERE username = $1',
+      'SELECT * FROM admins WHERE username = ?',
       [username]
     );
 
-    const user = rows[0]; // ✅ IMPORTANT
-
-    if (!user) {
-      return res.json({ success: false, message: 'Invalid credentials' });
+    if (rows.length === 0) {
+      return res.json({ success: false, message: 'User not found' });
     }
 
-    const match = await bcrypt.compare(password, user.password);
+    const admin = rows[0];
+
+    const match = await bcrypt.compare(password, admin.password);
 
     if (!match) {
-      return res.json({ success: false, message: 'Invalid credentials' });
+      return res.json({ success: false, message: 'Wrong password' });
     }
 
-    req.session.user = {
-      id: user.id,
-      username: user.username
+    req.session.admin = {
+      id: admin.id,
+      username: admin.username
     };
 
     res.json({ success: true });
 
   } catch (err) {
-    console.error('LOGIN ERROR:', err); // 🔥 WILL SHOW IN LOGS
+    console.error('LOGIN ERROR:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// CHECK LOGIN
+// ── CHECK SESSION ──
 router.get('/check', (req, res) => {
-  if (req.session.user) {
-    return res.json({
-      success: true,
-      username: req.session.user.username
-    });
+  if (req.session.admin) {
+    return res.json({ success: true, user: req.session.admin });
   }
   res.json({ success: false });
 });
 
-// LOGOUT
+// ── LOGOUT ──
 router.post('/logout', (req, res) => {
   req.session.destroy(() => {
     res.json({ success: true });
