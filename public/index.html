@@ -42,12 +42,14 @@
       padding: 10px;
     }
 
-    input, textarea {
+    input,
+    textarea {
       width: 100%;
       background: transparent;
       border: none;
       color: white;
       outline: none;
+      box-sizing: border-box;
     }
 
     textarea {
@@ -62,7 +64,9 @@
       gap: 4px;
     }
 
-    .star-wrap input { display: none; }
+    .star-wrap input {
+      display: none;
+    }
 
     .star-wrap label {
       font-size: 28px;
@@ -110,13 +114,26 @@
 <div class="page-wrapper">
   <div class="card">
 
-    <form id="feedbackForm">
+    <form
+      id="feedbackForm"
+      name="feedback"
+      method="POST"
+      data-netlify="true"
+    >
+
+      <input type="hidden" name="form-name" value="feedback">
 
       <!-- NAME -->
       <div class="form-group">
         <label>Name</label>
         <div class="input-wrap">
-          <input type="text" id="name" placeholder="Your name">
+          <input
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Your name"
+            required
+          >
         </div>
       </div>
 
@@ -124,7 +141,13 @@
       <div class="form-group">
         <label>Email</label>
         <div class="input-wrap">
-          <input type="email" id="email" placeholder="Your email">
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="Your email"
+            required
+          >
         </div>
       </div>
 
@@ -132,7 +155,7 @@
       <div class="form-group">
         <label>Rating</label>
         <div class="star-wrap">
-          <input type="radio" name="rating" id="s5" value="5"><label for="s5">★</label>
+          <input type="radio" name="rating" id="s5" value="5" required><label for="s5">★</label>
           <input type="radio" name="rating" id="s4" value="4"><label for="s4">★</label>
           <input type="radio" name="rating" id="s3" value="3"><label for="s3">★</label>
           <input type="radio" name="rating" id="s2" value="2"><label for="s2">★</label>
@@ -144,12 +167,17 @@
       <div class="form-group">
         <label>Comments</label>
         <div class="input-wrap">
-          <textarea id="comments" maxlength="500" placeholder="Write feedback..."></textarea>
+          <textarea
+            id="comments"
+            name="comments"
+            maxlength="500"
+            placeholder="Write feedback..."
+            required
+          ></textarea>
         </div>
       </div>
 
-      <!-- BUTTON -->
-      <button type="submit" id="submitBtn" class="btn">
+      <button type="submit" class="btn">
         Submit Feedback
       </button>
 
