@@ -1,24 +1,28 @@
-const form = document.getElementById('feedbackForm');
+const form = document.getElementById("feedbackForm");
 
-form.addEventListener('submit', async (e) => {
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const formData = new FormData(form);
 
   try {
-    const response = await fetch('/', {
-      method: 'POST',
-      body: formData
+    const response = await fetch("/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: new URLSearchParams(formData).toString()
     });
 
     if (response.ok) {
-      alert('✅ Feedback submitted!');
+      alert("✅ Feedback submitted successfully!");
       form.reset();
     } else {
-      alert('❌ Submission failed');
+      console.error(await response.text());
+      alert("❌ Submission failed");
     }
-  } catch (error) {
-    console.error(error);
-    alert('❌ Server error');
+  } catch (err) {
+    console.error(err);
+    alert("❌ Server error");
   }
 });
