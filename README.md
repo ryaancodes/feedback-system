@@ -277,3 +277,5 @@ With a B-Tree index, MySQL jumps to matching rows in O(log n) time.
 | Port 3000 already in use        | Change `PORT=3001` in `.env`                         |
 | `Cannot find module 'express'`  | Run `npm install` first                              |
 | Admin login says "Invalid"      | Ensure `database.sql` seed INSERT ran successfully   |
+
+Progress update: pushed from local machine
